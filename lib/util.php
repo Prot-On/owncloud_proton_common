@@ -4,20 +4,20 @@ namespace OCA\Proton;
 
 class Util {
 	
+    private static function _storeSession($key, $value) {
+        $_SESSION['proton'][$key] = $value;
+    }
+
+    private static function _getSession($key, $default = null) {
+        return isset($_SESSION['proton'][$key])?$_SESSION['proton'][$key]:$default;
+    }
+    
 	public static function storePassword($password) {
-		$_SESSION['proton']['password'] = $password;
+        return self::_storeSession('password', $password);
 	}
 	
 	public static function getPassword() {
-		return isset($_SESSION['proton']['password'])?$_SESSION['proton']['password']:null;
-	}
-	
-	public static function storeCompleteName($name) {
-		$_SESSION['proton']['complete_name'] = $name;
-	}
-	
-	public static function getCompleteName() {
-		return isset($_SESSION['proton']['complete_name'])?$_SESSION['proton']['complete_name']:null;
+		return self::_getSession('password');
 	}
 	
 	public static function log($message, $level = \OC_Log::DEBUG) {
@@ -25,7 +25,7 @@ class Util {
 	}
 	
 	public static function getPest($auth = true) {
-		$pest = new BearerPest(\OC_Config::getValue( "user_proton_url" ));	
+		$pest = new BearerPest(\OC_Config::getValue( "user_proton_api_url" ));	
 		if ($auth) {
 			if (self::getPassword() != null) {
 				$pest->setupAuth(\OC_User::getUser(), self::getPassword());
@@ -39,7 +39,50 @@ class Util {
 		}
 		return $pest;
 	}
+
+    public static function isOAuthConfigured() {
+        return !is_null(\OC_Config::getValue( "user_proton_oauth_secret" )) 
+            && !is_null(\OC_Config::getValue( "user_proton_oauth_client_id" ))
+            && !is_null(\OC_Config::getValue( "user_proton_url" ));
+    }
 		
+    public static function parseOAuthTokenResponse($response) {
+        if ($response['code'] == 200) {
+            $token = $response['result'];
+            $date = new \DateTime("now");
+            $token['expiration'] = $date->add(new \DateInterval('PT'.$token['expires_in'].'S'));
+            return $token;
+        }
+        return null;
+    }
+    
+    public static function setToken($token) {
+        $_SESSION['proton']['access_token'] = $token;
+    }
+
+    protected static function _getToken() {
+        //TODO retrieve token from DB if needed
+        return isset($_SESSION['proton']['access_token'])?$_SESSION['proton']['access_token']:null;
+    }
+    
+    public static function getToken() {
+        $token = self::_getToken();
+        if ($token == null) {
+            return null;
+        }
+        $currentDate = new \DateTime("now");
+        Util::log('Current: ' . $currentDate->format("Y-m-d\TH:i:s\Z"). ', Expiration: ' . $token['expiration']->format("Y-m-d\TH:i:s\Z"));
+        if ($currentDate < $token['expiration']) {
+            $client = new \OAuth2\Client(\OC_Config::getValue( "user_proton_oauth_client_id" ), \OC_Config::getValue( "user_proton_oauth_secret" ), \OAuth2\Client::AUTH_TYPE_AUTHORIZATION_BASIC);
+            $params = array('refresh_token' => $token['refresh_token']);
+            $response = $client->getAccessToken(\OC_Config::getValue( "user_proton_url" ).TOKEN_ENDPOINT, 'refresh_token', $params);
+            $token = self::parseOAuthTokenResponse($response);
+            self::setToken($token);
+        }
+        //TODO emit event to store token if needed
+        return $token['access_token'];
+    }
+    
 }
 
 ?>
