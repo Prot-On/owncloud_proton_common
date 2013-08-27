@@ -20,6 +20,14 @@ class Util {
 		return self::_getSession('password');
 	}
 	
+    public static function storeCompleteName($name) {
+        return self::_storeSession('complete_name', $name);
+    }
+    
+    public static function getCompleteName() {
+        return self::_getSession('complete_name');
+    }
+    
 	public static function log($message, $level = \OC_Log::DEBUG) {
 		\OC_Log::write('Prot-On', $message, $level);
 	}
@@ -39,6 +47,10 @@ class Util {
 		}
 		return $pest;
 	}
+
+    public static function isApiConfigured() {
+        return !is_null(\OC_Config::getValue( "user_proton_api_url" ));
+    }
 
     public static function isOAuthConfigured() {
         return !is_null(\OC_Config::getValue( "user_proton_oauth_secret" )) 
