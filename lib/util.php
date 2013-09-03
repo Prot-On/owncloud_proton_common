@@ -34,34 +34,22 @@ class Util {
 		\OC_Log::write('Prot-On', $message, $level);
 	}
 	
-	public static function getPest($auth = true, $admin = false) {
+	public static function getPest($auth = true) {
 		$pest = new BearerPest(\OC_Config::getValue( "user_proton_api_url" ));	
 		if ($auth) {
-		    if ($admin) {
-		        if (!self::isHostingAdminConfigured()) {
-		            throw new \Exception("No hosting admin configured");
-		        }
-		        $pest->setupAuth(\OC_Config::getValue( "user_proton_hosting_admin_login" ), \OC_Config::getValue( "user_proton_hosting_admin_password" ));
-		    } else {
-    			if (self::getPassword() != null) {
-    				$pest->setupAuth(\OC_User::getUser(), self::getPassword());
-    			} else {
-    				$token = self::getToken();
-    				if (empty($token)) {
-    					throw new \Exception("No authentication found");
-    				}
-    				$pest->setupAuth($token, '', 'bearer');
-    			}
-            }
+			if (self::getPassword() != null) {
+				$pest->setupAuth(\OC_User::getUser(), self::getPassword());
+			} else {
+				$token = self::getToken();
+				if (empty($token)) {
+					throw new \Exception("No authentication found");
+				}
+				$pest->setupAuth($token, '', 'bearer');
+			}
 		}
 		return $pest;
 	}
     
-    public static function isHostingAdminConfigured() {
-        return !is_null(\OC_Config::getValue( "user_proton_hosting_admin_login" ))
-            && !is_null(\OC_Config::getValue( "user_proton_hosting_admin_password" ));
-    }
-
     public static function isApiConfigured() {
         return !is_null(\OC_Config::getValue( "user_proton_api_url" ));
     }
