@@ -4,6 +4,8 @@ namespace OCA\Proton;
 
 class Util {
 	
+    const TOKEN_ENDPOINT         = '/external/oauth/token';
+    
     private static function _storeSession($key, $value) {
         $_SESSION['proton'][$key] = $value;
     }
@@ -32,21 +34,33 @@ class Util {
 		\OC_Log::write('Prot-On', $message, $level);
 	}
 	
-	public static function getPest($auth = true) {
+	public static function getPest($auth = true, $admin = false) {
 		$pest = new BearerPest(\OC_Config::getValue( "user_proton_api_url" ));	
 		if ($auth) {
-			if (self::getPassword() != null) {
-				$pest->setupAuth(\OC_User::getUser(), self::getPassword());
-			} else {
-				$token = OAuth::getToken();
-				if (empty($token)) {
-					throw new \Exception("No authentication found");
-				}
-				$pest->setupAuth($token, '', 'bearer');
-			}
+		    if ($admin) {
+		        if (!self::isHostingAdminConfigured()) {
+		            throw new \Exception("No hosting admin configured");
+		        }
+		        $pest->setupAuth(\OC_Config::getValue( "user_proton_hosting_admin_login" ), \OC_Config::getValue( "user_proton_hosting_admin_password" ));
+		    } else {
+    			if (self::getPassword() != null) {
+    				$pest->setupAuth(\OC_User::getUser(), self::getPassword());
+    			} else {
+    				$token = self::getToken();
+    				if (empty($token)) {
+    					throw new \Exception("No authentication found");
+    				}
+    				$pest->setupAuth($token, '', 'bearer');
+    			}
+            }
 		}
 		return $pest;
 	}
+    
+    public static function isHostingAdminConfigured() {
+        return !is_null(\OC_Config::getValue( "user_proton_hosting_admin_login" ))
+            && !is_null(\OC_Config::getValue( "user_proton_hosting_admin_password" ));
+    }
 
     public static function isApiConfigured() {
         return !is_null(\OC_Config::getValue( "user_proton_api_url" ));
@@ -84,10 +98,16 @@ class Util {
         }
         $currentDate = new \DateTime("now");
         Util::log('Current: ' . $currentDate->format("Y-m-d\TH:i:s\Z"). ', Expiration: ' . $token['expiration']->format("Y-m-d\TH:i:s\Z"));
-        if ($currentDate < $token['expiration']) {
+        if ($currentDate > $token['expiration']) {
+            
+            require_once('PHP-OAuth2/Client.php');
+            require_once('PHP-OAuth2/GrantType/IGrantType.php');
+            require_once('PHP-OAuth2/GrantType/AuthorizationCode.php');
+            require_once('PHP-OAuth2/GrantType/RefreshToken.php');
+            
             $client = new \OAuth2\Client(\OC_Config::getValue( "user_proton_oauth_client_id" ), \OC_Config::getValue( "user_proton_oauth_secret" ), \OAuth2\Client::AUTH_TYPE_AUTHORIZATION_BASIC);
             $params = array('refresh_token' => $token['refresh_token']);
-            $response = $client->getAccessToken(\OC_Config::getValue( "user_proton_url" ).TOKEN_ENDPOINT, 'refresh_token', $params);
+            $response = $client->getAccessToken(\OC_Config::getValue( "user_proton_url" ).self::TOKEN_ENDPOINT, 'refresh_token', $params);
             $token = self::parseOAuthTokenResponse($response);
             self::setToken($token);
         }
