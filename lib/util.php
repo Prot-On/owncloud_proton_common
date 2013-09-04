@@ -22,14 +22,6 @@ class Util {
 		return self::_getSession('password');
 	}
 	
-    public static function storeCompleteName($name) {
-        return self::_storeSession('complete_name', $name);
-    }
-    
-    public static function getCompleteName() {
-        return self::_getSession('complete_name');
-    }
-    
 	public static function log($message, $level = \OC_Log::DEBUG) {
 		\OC_Log::write('Prot-On', $message, $level);
 	}
@@ -103,6 +95,21 @@ class Util {
         return $token['access_token'];
     }
     
+    public static function toTmpFile($path) {
+        if (\OC\Files\Filesystem::isValidPath($path)) {
+            $source = \OC\Files\Filesystem::fopen($path, 'r');
+            if ($source) {
+                $extension = pathinfo($path, PATHINFO_EXTENSION);
+                $tmpFile = \OC_Helper::tmpFile(".$extension");
+                file_put_contents($tmpFile, $source);
+                return $tmpFile;
+            } else {
+                return false;
+            }
+        } else {
+            return false;
+        }
+    }
 }
 
 ?>
