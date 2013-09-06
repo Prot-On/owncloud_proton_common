@@ -97,7 +97,7 @@ class Util {
     
     public static function toTmpFile($fileId) {
         $path = \OC\Files\Filesystem::getPath($fileId);
-        $temp = Util::toTmpFile(dirname($path) . '/' . basename($path));
+        $path = dirname($path) . '/' . basename($path);
         
         if (\OC\Files\Filesystem::isValidPath($path)) {
             $source = \OC\Files\Filesystem::fopen($path, 'r');
@@ -113,6 +113,41 @@ class Util {
             return false;
         }
     }
+    
+    public static function getDocIds($fileId) {
+        $query = \OC_DB::prepare( 'SELECT `docId`, `xDocId` FROM `*PREFIX*proton_docid` WHERE fileId = ?' );
+        $result = $query->execute( array( $fileId ))->fetch();
+        if ($result !== false) {
+            return $result;
+        }
+        
+        $temp = self::toTmpFile($fileId);
+        $pest = self::getPest();
+        $thing = $pest->post('/documents/getInfo', array("file" => "@".$temp));
+        $info = json_decode($thing, true);
+        $result = array ('docId' => null, 'xDocId' => null);
+        $params = array(null, null, $fileId);
+        if (!is_null($info)) {
+            $result = array ('docId' => $info['docid'], 'xDocId' => $info['xdocId']);
+            $params = array($info['docid'], $info['xdocId'], $fileId);
+        } 
+        $query = \OC_DB::prepare( 'INSERT INTO `*PREFIX*proton_docid` (`docId`, `xDocId`, `fileId`) VALUES (?, ?, ?)' );
+        $query->execute($params);
+        return $result;
+    }
+    
+    public static function unProtectDocIds($fileId) {
+        $query = \OC_DB::prepare( 'UPDATE `*PREFIX*proton_docid` SET docId = ?, xDocId = ? WHERE fileId = ?' );
+        $query->execute(array(null, null, $fileId));
+    }
+    
+    public static function protectDocIds($fileId, $docId, $xDocId) {
+         //If you can not get the docId and xDocId when protecting, then change this to delete the row and let the system refecth it when needed
+        $query = \OC_DB::prepare( 'UPDATE `*PREFIX*proton_docid` SET docId = ?, xDocId = ? WHERE fileId = ?' );
+        $query->execute(array($docId, $xDocId, $fileId));
+    }
+    
+    
 }
 
 ?>
