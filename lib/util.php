@@ -95,7 +95,10 @@ class Util {
         return $token['access_token'];
     }
     
-    public static function toTmpFile($path) {
+    public static function toTmpFile($fileId) {
+        $path = \OC\Files\Filesystem::getPath($fileId);
+        $temp = Util::toTmpFile(dirname($path) . '/' . basename($path));
+        
         if (\OC\Files\Filesystem::isValidPath($path)) {
             $source = \OC\Files\Filesystem::fopen($path, 'r');
             if ($source) {
