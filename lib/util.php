@@ -132,7 +132,11 @@ class Util {
         
         $temp = self::toTmpFile($fileId);
         $pest = self::getPest();
-        $thing = $pest->post('/documents/getInfo', array("file" => "@".$temp));
+        try {
+            $thing = $pest->post('/documents/getInfo', array("file" => "@".$temp));
+        } catch (\Exception $e) {
+            return null;
+        }
         $info = json_decode($thing, true);
         $result = array ('docId' => null, 'xDocId' => null);
         $params = array(null, null, $fileId);
