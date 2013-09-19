@@ -21,6 +21,15 @@ class Util {
 	public static function getPassword() {
 		return self::_getSession('password');
 	}
+    
+    public static function markProtOnUser() {
+        return self::_storeSession('proton_user', true);
+    }
+    
+    public static function checkProtOnUser() {
+        $protUser = self::_getSession('proton_user');
+        return !empty($protUser) && $protUser === true;
+    }
 	
 	public static function log($message, $level = \OC_Log::DEBUG) {
 		\OC_Log::write('Prot-On', $message, $level);
