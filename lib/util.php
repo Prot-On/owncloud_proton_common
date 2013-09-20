@@ -135,6 +135,7 @@ class Util {
         try {
             $thing = $pest->post('/documents/getInfo', array("file" => "@".$temp));
         } catch (\Exception $e) {
+            Util::log('Excepcion '.$e);
             return null;
         }
         $info = json_decode($thing, true);
