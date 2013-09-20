@@ -23,15 +23,15 @@ class Util {
 	}
     
     public static function storeUser($user) {
-        return self::_storeSession('user', $password);
+        return self::_storeSession('user', $user);
     }
     
     public static function getUser() {
         return self::_getSession('user');
     }
     
-    public static function storeCompleteName($user) {
-        return self::_storeSession('completeName', $password);
+    public static function storeCompleteName($completeName) {
+        return self::_storeSession('completeName', $completeName);
     }
     
     public static function getCompleteName() {
@@ -43,8 +43,7 @@ class Util {
     }
     
     public static function checkProtOnUser() {
-        $protUser = self::_getSession('proton_user');
-        return !empty($protUser) && $protUser === true;
+        return (self::_getSession('proton_user') === true);
     }
 	
 	public static function log($message, $level = \OC_Log::DEBUG) {
