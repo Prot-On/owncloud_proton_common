@@ -22,6 +22,22 @@ class Util {
 		return self::_getSession('password');
 	}
     
+    public static function storeUser($user) {
+        return self::_storeSession('user', $password);
+    }
+    
+    public static function getUser() {
+        return self::_getSession('user');
+    }
+    
+    public static function storeCompleteName($user) {
+        return self::_storeSession('completeName', $password);
+    }
+    
+    public static function getCompleteName() {
+        return self::_getSession('completeName');
+    }
+    
     public static function markProtOnUser() {
         return self::_storeSession('proton_user', true);
     }
@@ -39,7 +55,7 @@ class Util {
 		$pest = new BearerPest(\OC_Config::getValue( "user_proton_api_url" ));	
 		if ($auth) {
 			if (self::getPassword() != null) {
-				$pest->setupAuth(\OC_User::getUser(), self::getPassword());
+				$pest->setupAuth(self::getUser(), self::getPassword());
 			} else {
 				$token = self::getToken();
 				if (empty($token)) {
@@ -86,7 +102,7 @@ class Util {
             return null;
         }
         $currentDate = new \DateTime("now");
-        Util::log('Current: ' . $currentDate->format("Y-m-d\TH:i:s\Z"). ', Expiration: ' . $token['expiration']->format("Y-m-d\TH:i:s\Z"));
+        self::log('Current: ' . $currentDate->format("Y-m-d\TH:i:s\Z"). ', Expiration: ' . $token['expiration']->format("Y-m-d\TH:i:s\Z"));
         if ($currentDate > $token['expiration']) {
             
             require_once('PHP-OAuth2/Client.php');
@@ -135,7 +151,7 @@ class Util {
         try {
             $thing = $pest->post('/documents/getInfo', array("file" => "@".$temp));
         } catch (\Exception $e) {
-            Util::log('Excepcion '.$e);
+            self::log('Excepcion '.$e);
             return null;
         }
         $info = json_decode($thing, true);
