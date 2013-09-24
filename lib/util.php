@@ -119,16 +119,20 @@ class Util {
         return $token['access_token'];
     }
     
-    public static function toTmpFile($fileId) {
+    public static function toTmpFileId($fileId) {
         $path = \OC\Files\Filesystem::getPath($fileId);
+        return self::toTmpFilePath($path);
+    }
+    
+    public static function toTmpFilePath($path) {
         $path = dirname($path) . '/' . basename($path);
-        
+                
         if (\OC\Files\Filesystem::isValidPath($path)) {
             $source = \OC\Files\Filesystem::fopen($path, 'r');
             if ($source) {
                 $tmpFolder = \OC_Helper::tmpFolder();
                 $tmpFile = $tmpFolder.basename($path);
-                file_put_contents($tmpFolder.basename($path), $source);
+                file_put_contents($tmpFile, $source);
                 return $tmpFile;
             } else {
                 return false;
@@ -145,7 +149,7 @@ class Util {
             return $result;
         }
         
-        $temp = self::toTmpFile($fileId);
+        $temp = self::toTmpFileId($fileId);
         $pest = self::getPest();
         try {
             $thing = $pest->post('/documents/getInfo', array("file" => "@".$temp));
