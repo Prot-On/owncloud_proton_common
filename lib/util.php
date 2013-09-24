@@ -126,9 +126,9 @@ class Util {
         if (\OC\Files\Filesystem::isValidPath($path)) {
             $source = \OC\Files\Filesystem::fopen($path, 'r');
             if ($source) {
-                $extension = pathinfo($path, PATHINFO_EXTENSION);
-                $tmpFile = \OC_Helper::tmpFile(".$extension");
-                file_put_contents($tmpFile, $source);
+                $tmpFolder = \OC_Helper::tmpFolder();
+                $tmpFile = $tmpFolder.basename($path);
+                file_put_contents($tmpFolder.basename($path), $source);
                 return $tmpFile;
             } else {
                 return false;
