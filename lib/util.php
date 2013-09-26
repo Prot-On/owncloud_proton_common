@@ -46,6 +46,14 @@ class Util {
         return (self::_getSession('proton_user') === true);
     }
 	
+    public static function setToken($token) {
+        self::_storeSession('access_token', $token);
+    }
+
+    protected static function _getToken() {
+        return self::_getSession('access_token');
+    }
+    
 	public static function log($message, $level = \OC_Log::DEBUG) {
 		\OC_Log::write('Prot-On', $message, $level);
 	}
@@ -86,15 +94,6 @@ class Util {
         return null;
     }
     
-    public static function setToken($token) {
-        $_SESSION['proton']['access_token'] = $token;
-    }
-
-    protected static function _getToken() {
-        //TODO retrieve token from DB if needed
-        return isset($_SESSION['proton']['access_token'])?$_SESSION['proton']['access_token']:null;
-    }
-    
     public static function getToken() {
         $token = self::_getToken();
         if ($token == null) {
@@ -113,6 +112,7 @@ class Util {
             $params = array('refresh_token' => $token['refresh_token']);
             $response = $client->getAccessToken(\OC_Config::getValue( "user_proton_url" ).self::TOKEN_ENDPOINT, 'refresh_token', $params);
             $token = self::parseOAuthTokenResponse($response);
+            \OC_Hook::emit('OCA\Proton\OAuth', 'token_renew', $token);
             self::setToken($token);
         }
         //TODO emit event to store token if needed
