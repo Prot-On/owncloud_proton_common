@@ -75,7 +75,7 @@ class Util {
 	}
     
     public static function isApiConfigured() {
-        return !\OC_Config::getValue( "user_proton_api_url" );
+        return \OC_Config::getValue( "user_proton_api_url" );
     }
 
     public static function isOAuthConfigured() {
