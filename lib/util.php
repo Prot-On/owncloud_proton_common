@@ -75,13 +75,13 @@ class Util {
 	}
     
     public static function isApiConfigured() {
-        return !is_null(\OC_Config::getValue( "user_proton_api_url" ));
+        return !\OC_Config::getValue( "user_proton_api_url" );
     }
 
     public static function isOAuthConfigured() {
-        return !is_null(\OC_Config::getValue( "user_proton_oauth_secret" )) 
-            && !is_null(\OC_Config::getValue( "user_proton_oauth_client_id" ))
-            && !is_null(\OC_Config::getValue( "user_proton_url" ));
+        return \OC_Config::getValue( "user_proton_oauth_secret" ) 
+            && \OC_Config::getValue( "user_proton_oauth_client_id" )
+            && \OC_Config::getValue( "user_proton_url" );
     }
 		
     public static function parseOAuthTokenResponse($response) {
